@@ -1,23 +1,77 @@
-const params = new URLSearchParams(window.location.search);
-const employeeId = params.get("id");
+let employees = [];
 
-if(employeeId){
-    document.getElementById("employeeid").innerText = employeeId;
+fetch(CONFIG.SHEET_URL)
+.then(response => response.text())
+.then(data => {
 
-    // পরবর্তীতে Google Sheet থেকে ডাটা এনে এখানে দেখানো হবে
-    document.getElementById("name").innerText = "Loading...";
-    document.getElementById("designation").innerText = "Loading...";
-    document.getElementById("blood").innerText = "Loading...";
-    document.getElementById("mobile").innerText = "Loading...";
-    document.getElementById("joining").innerText = "Loading...";
-    document.getElementById("status").innerText = "Active";
-}
-else{
+    const rows = data.split("\n").map(row => row.split(","));
 
-    document.querySelector(".card").innerHTML = `
-    <div style="padding:40px;text-align:center">
-        <h2 style="color:red">❌ Invalid Employee ID</h2>
-        <p>No Employee ID Found</p>
-    </div>
-    `;
+    const headers = rows[0];
+
+    employees = rows.slice(1).map(row => {
+
+        let obj = {};
+
+        headers.forEach((header,index)=>{
+            obj[header.trim()] = row[index]?.trim();
+        });
+
+        return obj;
+
+    });
+
+});
+
+
+function verifyEmployee(){
+
+    const id = document.getElementById("employeeID").value.trim();
+
+    const employee = employees.find(
+        emp => emp["Employee ID"] === id
+    );
+
+
+    if(employee){
+
+        document.getElementById("result").innerHTML = `
+
+        <div class="card">
+
+        <img src="${employee["Photo Link"]}" class="photo">
+
+        <h2>${employee["Employee Name"]}</h2>
+
+        <p><b>Employee ID:</b> ${employee["Employee ID"]}</p>
+
+        <p><b>Designation:</b> ${employee["Designation"]}</p>
+
+        <p><b>Blood Group:</b> ${employee["Blood Group"]}</p>
+
+        <p><b>Mobile:</b> ${employee["Mobile Number"]}</p>
+
+        <p><b>Status:</b> ${employee["Status"]}</p>
+
+        <p style="color:green">
+        ✔ Verified Digital One Employee
+        </p>
+
+        </div>
+
+        `;
+
+    }
+
+    else{
+
+        document.getElementById("result").innerHTML=`
+
+        <div class="error">
+        ❌ Employee Not Found
+        </div>
+
+        `;
+
+    }
+
 }
