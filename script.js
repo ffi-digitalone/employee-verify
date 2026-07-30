@@ -1,3 +1,6 @@
+const params = new URLSearchParams(window.location.search);
+const employeeId = params.get("id");
+
 fetch(CONFIG.SHEET_URL)
 .then(res => res.text())
 .then(csv => {
@@ -5,21 +8,26 @@ fetch(CONFIG.SHEET_URL)
     const rows = csv.trim().split("\n").map(r => r.split(","));
     const headers = rows.shift().map(h => h.trim());
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id");
-
-    const data = rows.map(r => {
+    const employees = rows.map(row => {
         let obj = {};
-        headers.forEach((h,i)=>{
-            obj[h]=r[i] ? r[i].trim() : "";
+        headers.forEach((header, i) => {
+            obj[header] = row[i] ? row[i].trim().replace(/^"|"$/g, "") : "";
         });
         return obj;
     });
 
-    const emp = data.find(e => e["Employee ID"]===id);
+    const emp = employees.find(e => e["Employee ID"] === employeeId);
 
-    if(!emp){
-        alert("Employee Not Found");
+    if (!emp) {
+
+        document.getElementById("employeeid").innerText = "Not Found";
+        document.getElementById("name").innerText = "Employee Not Found";
+        document.getElementById("designation").innerText = "-";
+        document.getElementById("blood").innerText = "-";
+        document.getElementById("mobile").innerText = "-";
+        document.getElementById("joining").innerText = "-";
+        document.getElementById("status").innerText = "Inactive";
+
         return;
     }
 
@@ -31,8 +39,15 @@ fetch(CONFIG.SHEET_URL)
     document.getElementById("joining").innerText = emp["Joining Date"];
     document.getElementById("status").innerText = emp["Status"];
 
-    if(emp["Photo Link"]){
+    if (emp["Photo Link"]) {
         document.getElementById("photo").src = emp["Photo Link"];
     }
+
+})
+.catch(error => {
+
+    console.error(error);
+
+    document.getElementById("name").innerText = "Loading Failed";
 
 });
