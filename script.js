@@ -1,3 +1,28 @@
+function getDriveImage(url) {
+
+  if (!url) return CONFIG.DEFAULT_PHOTO;
+
+  // open?id=
+  if (url.includes("open?id=")) {
+    const id = url.split("open?id=")[1].split("&")[0];
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  }
+
+  // file/d/
+  if (url.includes("/file/d/")) {
+    const id = url.split("/file/d/")[1].split("/")[0];
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  }
+
+  // uc?id=
+  if (url.includes("uc?id=")) {
+    const id = url.split("uc?id=")[1].split("&")[0];
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  }
+
+  return url;
+
+}
 const params = new URLSearchParams(window.location.search);
 const employeeId = (params.get("id") || "").trim();
 
@@ -41,12 +66,8 @@ fetch(CONFIG.SHEET_URL)
   document.getElementById("joining").textContent = emp["Joining Date"];
   document.getElementById("status").textContent = emp["Status"];
 
-  if (emp["Photo Link"]) {
-    document.getElementById("photo").src = emp["Photo Link"];
-  } else {
-    document.getElementById("photo").src = CONFIG.DEFAULT_PHOTO;
-  }
-
+  document.getElementById("photo").src =
+    getDriveImage(emp["Photo Link"]);
 })
 .catch(err => {
   console.error(err);
