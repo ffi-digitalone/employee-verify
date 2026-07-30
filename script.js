@@ -25,7 +25,26 @@ function getDriveImage(url) {
 }
 const params = new URLSearchParams(window.location.search);
 const employeeId = (params.get("id") || "").trim();
+function getDriveImage(url) {
 
+    if (!url) return "assets/user.png";
+
+    let id = "";
+
+    if (url.includes("/file/d/")) {
+        id = url.split("/file/d/")[1].split("/")[0];
+    } else if (url.includes("open?id=")) {
+        id = url.split("open?id=")[1].split("&")[0];
+    } else if (url.includes("id=")) {
+        id = url.split("id=")[1].split("&")[0];
+    }
+
+    if (id) {
+        return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+    }
+
+    return "assets/user.png";
+}
 document.getElementById("logo").src = CONFIG.LOGO_URL;
 
 fetch(CONFIG.SHEET_URL)
@@ -67,8 +86,7 @@ fetch(CONFIG.SHEET_URL)
   document.getElementById("status").textContent = emp["Status"];
 
   document.getElementById("photo").src =
-    getDriveImage(emp["Photo Link"]);
-})
+    getDriveImage(employee["Photo Link"]);
 .catch(err => {
   console.error(err);
   document.getElementById("verifyStatus").innerHTML = "❌ DATA LOAD FAILED";
