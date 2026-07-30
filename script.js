@@ -1,69 +1,54 @@
-const urlParams = new URLSearchParams(window.location.search);
-const employeeId = urlParams.get("id");
+const params = new URLSearchParams(window.location.search);
+const employeeId = (params.get("id") || "").trim();
 
 document.getElementById("logo").src = CONFIG.LOGO_URL;
 
 fetch(CONFIG.SHEET_URL)
-.then(response => response.text())
-.then(csv => {
+.then(r => r.text())
+.then(text => {
 
-    const lines = csv.trim().split(/\r?\n/);
+  const rows = text.trim().split(/\r?\n/).map(r =>
+    r.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g)
+      .map(c => c.replace(/^"|"$/g, "").trim())
+  );
 
-    const headers = lines[0].split(",").map(h => h.replace(/"/g,"").trim());
+  const headers = rows.shift();
 
-    let employee = null;
+  const data = rows.map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i] || "");
+    return obj;
+  });
 
-    for(let i=1;i<lines.length;i++){
+  console.log(data);
 
-        const row = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+  const emp = data.find(e =>
+    (e["Employee ID"] || "").trim().toUpperCase() === employeeId.toUpperCase()
+  );
 
-        if(!row) continue;
+  if (!emp) {
+    document.getElementById("verifyStatus").innerHTML = "❌ EMPLOYEE NOT FOUND";
+    return;
+  }
 
-        let obj = {};
+  document.getElementById("verifyStatus").innerHTML = "✅ VERIFIED EMPLOYEE";
 
-        headers.forEach((h,index)=>{
+  document.getElementById("employeeid").textContent = emp["Employee ID"];
+  document.getElementById("name").textContent = emp["Employee Name"];
+  document.getElementById("designation").textContent = emp["Designation"];
+  document.getElementById("blood").textContent = emp["Blood Group"];
+  document.getElementById("mobile").textContent = emp["Mobile Number"];
+  document.getElementById("joining").textContent = emp["Joining Date"];
+  document.getElementById("status").textContent = emp["Status"];
 
-            obj[h]=row[index] ? row[index].replace(/"/g,"").trim() : "";
-
-        });
-
-        if(obj["Employee ID"]===employeeId){
-
-            employee=obj;
-
-            break;
-
-        }
-
-    }
-
-    if(employee){
-
-        document.getElementById("employeeid").innerText=employee["Employee ID"];
-        document.getElementById("name").innerText=employee["Employee Name"];
-        document.getElementById("designation").innerText=employee["Designation"];
-        document.getElementById("blood").innerText=employee["Blood Group"];
-        document.getElementById("mobile").innerText=employee["Mobile Number"];
-        document.getElementById("joining").innerText=employee["Joining Date"];
-        document.getElementById("status").innerText=employee["Status"];
-
-        if(employee["Photo Link"]!=""){
-
-            document.getElementById("photo").src=employee["Photo Link"];
-
-        }
-
-    }else{
-
-        document.querySelector(".status").innerHTML="❌ EMPLOYEE NOT FOUND";
-
-    }
+  if (emp["Photo Link"]) {
+    document.getElementById("photo").src = emp["Photo Link"];
+  } else {
+    document.getElementById("photo").src = CONFIG.DEFAULT_PHOTO;
+  }
 
 })
-.catch(err=>{
-
-    console.log(err);
-
-    document.querySelector(".status").innerHTML="❌ DATA LOAD FAILED";
-
+.catch(err => {
+  console.error(err);
+  document.getElementById("verifyStatus").innerHTML = "❌ DATA LOAD FAILED";
 });
